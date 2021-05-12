@@ -56,17 +56,17 @@ open($inFileHandle,'<',$inFileName) or die "Cannot open file $inFileName.\n";
 #run selected method. currently only one at a time can be performed
 if($method eq "name"){
   fastaName($inFileHandle);
-  close($inFileHandle);
 }
 elsif($method eq "trim"){
   fastaTrim($inFileHandle);
-  close($inFileHandle);
 }
 elsif($method eq "split"){
   fastaSplit($inFileHandle);
-  close($inFileHandle);
 }
-
+elsif($method eq "linear"){
+  fastaLinear($inFileHandle);
+}
+close($inFileHandle);
 
 #renames sequences in a multi-fasta file based on number + user input $seqName. prints to STDOUT
 sub fastaName{
@@ -134,6 +134,27 @@ sub fastaSplit{
   }
 }
 
+#converts multi-line fasta sequence to linear one-line sequence. Prints to STDOUT.
+sub fastaLinear{
+  while(<$inFileHandle>){
+    if($_ =~/^\>(.*)/){
+      if(defined $firstEntry){
+        print "\n".$_;
+      }
+      else{
+        print $_;
+        $firstEntry=1;
+      }
+    }
+    else{
+      seqCheck($_);
+      my $seqLine=$_;
+      chomp($seqLine);
+      print $seqLine;
+    }
+  }
+}
+
 #checks that sequence is composed with valid DNA, protein or gap chars
 sub seqCheck{
   my $seqLine=$_[0];
@@ -143,7 +164,6 @@ sub seqCheck{
     }
   return 1;
 }
-
 
 
 sub help{
@@ -156,6 +176,7 @@ Methods:
 \t\"trim\"\tTrim fasta header to user defined length (useful for phylip, prokka etc). Prints to STDOUT.
 \t\"name\"\tAdd index number and user-defined prefix to the beginning of sequence headers. ex. \">Protein sequence\" will become \">1_myName Protein Sequence\". Prints to STDOUT
 \t\"split\"\tSplit multi-fasta file into multiple files, containing one sequence per file. Files will be output into a directory which can be named by the user. Default directory name is \"tmp\".
+\t\"linear\"\tConvert multi-line FASTA sequence to linear. Prints to STDOUT.
 
 Method options:
 \t-t --trim\tINT\tDefine sequence length for \"trim\" method. Negative integers trim from the end of the sequence header. [Required]
